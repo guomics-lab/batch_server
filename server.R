@@ -259,7 +259,7 @@ function(input, output,session) {
       "UMAP calculation is done. Select following to (re)draw UMAP"
   })
   
-  drawUmap<-eventReactive(input$umap_effect_name,{
+  drawUmap<-eventReactive(c(input$umap_submit,input$umap_effect_name),{
     mydf<-data.frame(getUmap())
     mydf$label<-as.character(getSampleInfo()[rownames(getMyd()),input$umap_effect_name])
     p<-ggplot(mydf,aes(x=X1, y=X2, colour=label)) + geom_point(size=3)+
@@ -269,12 +269,15 @@ function(input, output,session) {
         axis.line.x = element_line(color="black", size = 0.5),
         axis.line.y = element_line(color="black", size = 0.5),
         panel.background = element_blank())
+
+    output$draw_umap<-renderPlotly({
+      mytext <- paste("X1: ", mydf$X1, "\n" , "X2: ", mydf$X2, "\n","Label: ",mydf$label,"\n", "Sample: ",rownames(getMyd()),  sep="")
+      p2 <- ggplotly(p)
+      style(p2, text=mytext, hoverinfo = "text")
+    })
     return(p)
-    
   },ignoreNULL = T,ignoreInit =T)
-  output$draw_umap<-renderPlotly({
-    plotly_build(drawUmap())
-  })
+
   output$umap_ui <- renderUI({
     if(!is.null(drawUmap()))
       downloadButton("umap_download", "Download", class = "btn-primary")
